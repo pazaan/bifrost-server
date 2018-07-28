@@ -1,0 +1,72 @@
+version: '3'
+
+services:
+  # Mongo is only required so that Nightscout will start up
+  # FIXME: We should find a more resource-friendly way to solve this
+  mongo:
+    image: mongo:3.4
+    volumes:
+      - ${NS_MONGO_DATA_DIR:-mongo-data}:/data/db
+    networks:
+     - back-tier
+    # So that we can get to the database from the host on 27018
+    ports:
+      - '27018:27017'
+
+  remote-cgm-monitor:
+    image: nightscout/cgm-remote-monitor-travis
+    # volumes:
+    #   - .:/opt/app
+    environment:
+      # NODE_ENV: development
+      TZ: Australia/Melbourne
+      MONGO_CONNECTION: mongodb://mongo:27017/nightscout
+      API_SECRET: mypassword123
+      BG_HIGH: 215
+      BG_LOW: 70
+      BG_TARGET_TOP: 180
+      BG_TARGET_BOTTOM: 80
+      AUTH_DEFAULT_ROLES: readable devicestatus-upload
+      ENABLE: careportal cage basal iob cob bwp treatmentnotify pump
+      THEME: colors
+      DEVICESTATUS_ADVANCED: 'true'
+      DISPLAY_UNITS: mmol
+      SHOW_FORECAST: ar2
+      SHOW_PLUGINS: pump
+      PUMP_FIELDS: battery reservoir clock status
+      # SSL_KEY: /opt/app/ssl/server.key
+      # SSL_CERT: /opt/app/ssl/serverchain.crt
+      # SSL_CA: /opt/app/ssl/cachain.crt
+    ports:
+      - '1337:1337'
+    links:
+      - mongo
+    networks:
+      - back-tier
+      - front-tier
+
+  bifrost-server:
+    image: pazaan/bifrost-server
+    # volumes:
+    #   - .:/opt/app
+    environment:
+      # NODE_ENV: development
+      NIGHTSCOUT_HOST: http://remote-cgm-monitor:1337
+      CUSTOM_TIDEPOOL_HOST: http://host.docker.internal:8009
+      BIFROST_USERNAME: ${BIFROST_USERNAME}
+      BIFROST_PASSWORD: ${BIFROST_PASSWORD}
+    ports:
+      - '1338:1338'
+    links:
+      - remote-cgm-monitor
+    networks:
+      - back-tier
+      - front-tier
+
+volumes:
+  mongo-data:
+
+networks:
+  front-tier:
+  back-tier:
+

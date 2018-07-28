@@ -1,0 +1,14 @@
+html(lang='en')
+  head
+    title Bifrost Server
+  body
+    h1 Select a user to follow:
+    ul
+    each user in users
+      - const userPath = `/user/${env}/${user.userid}`;
+        li
+          form(method='post' action='/user')
+            input(type='hidden' name='env' value=env)
+            button(type='submit' name='userid' value=user.userid) #{user.fullName}
+    br
+    a(href='/logout') Logout
