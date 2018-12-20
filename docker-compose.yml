@@ -3,6 +3,8 @@ version: '3'
 services:
   # Mongo is only required so that Nightscout will start up
   # FIXME: We should find a more resource-friendly way to solve this
+  # Look into https://github.com/williamkapke/mongo-mock or
+  # https://github.com/mongodb-js/mongodb-mock-server
   mongo:
     image: mongo:3.4
     volumes:
